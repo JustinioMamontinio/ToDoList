@@ -63,7 +63,7 @@ class TaskView:
         header.pack_propagate(False)
         
         ctk.CTkLabel(
-            header, text=f"Привет, {self.user_id}!",  # email передается извне
+            header, text=f"Привет, {self.user_id}!",  # ник передается извне
             font=ctk.CTkFont(size=16, weight="bold")
         ).pack(side="left", padx=10)
         ctk.CTkButton(header, text="Выйти", command=self._on_logout, width=80).pack(side="right", padx=10)
@@ -118,26 +118,27 @@ class TaskView:
         form.columnconfigure(1, weight=1)
 
     def _build_deadline_widgets(self) -> None:
-        """Создает виджеты выбора даты и времени дедлайна."""
-        if not self.deadline_frame:
-            return
-            
-        # Календарь
+        """Простое создание виджетов даты и времени."""
         self.calendar = DateEntry(
-            self.deadline_frame, width=12, background='darkblue',
-            foreground='white', borderwidth=2, date_pattern='yyyy-mm-dd'
+            self.deadline_frame, width=12, date_pattern='yyyy-mm-dd',
+            background='darkblue', foreground='white', borderwidth=2
         )
         self.calendar.pack(side="left", padx=(0, 10))
-
-        # Время
+        
         time_frame = ctk.CTkFrame(self.deadline_frame, fg_color="transparent")
         time_frame.pack(side="left")
         
-        self.hour_entry = ctk.CTkEntry(time_frame, width=40, placeholder_text="00")
+        self.hour_entry = ctk.CTkEntry(time_frame, width=40)
         self.hour_entry.pack(side="left")
         ctk.CTkLabel(time_frame, text=" : ").pack(side="left")
-        self.minute_entry = ctk.CTkEntry(time_frame, width=40, placeholder_text="00")
+        self.minute_entry = ctk.CTkEntry(time_frame, width=40)
         self.minute_entry.pack(side="left")
+        
+        # Дефолт: завтра, 09:00
+        tomorrow = date.today() + timedelta(days=1)
+        self.calendar.set_date(tomorrow)
+        self.hour_entry.insert(0, "09")
+        self.minute_entry.insert(0, "00")
 
     def _toggle_deadline_widgets(self) -> None:
         """Показывает/скрывает виджеты выбора дедлайна."""
@@ -205,25 +206,34 @@ class TaskView:
             return None
 
     def add_task(self) -> None:
-        """Добавляет новую задачу."""
-        if not self.title_entry or not self.desc_entry:
-            return
-            
+        """Добавление задачи с простой и надёжной проверкой дедлайна."""
         title = self.title_entry.get().strip()
         description = self.desc_entry.get().strip()
         
         if not title:
             messagebox.showerror("Ошибка", "Название задачи не может быть пустым.")
             return
-
-        deadline = self._parse_deadline()
-        if deadline is None and self.deadline_enabled and self.deadline_enabled.get():
-            return  # Ошибка валидации уже показана
-
+        
+        deadline = None
+        if self.deadline_enabled.get():
+            try:
+                # calendar.get() может вернуть строку или date, приводим к строке
+                date_str = str(self.calendar.get())
+                h = int(self.hour_entry.get().strip() or 0)
+                m = int(self.minute_entry.get().strip() or 0)
+                
+                if not (0 <= h <= 23 and 0 <= m <= 59):
+                    raise ValueError("Время должно быть от 00:00 до 23:59")
+                    
+                deadline = datetime.strptime(f"{date_str} {h:02d}:{m:02d}", "%Y-%m-%d %H:%M")
+            except Exception as e:
+                messagebox.showerror("Ошибка", f"Неверный формат даты или времени: {e}")
+                return
+        
         try:
-            self.task_manager.add_task(self.user_id, title, description, deadline)
+            self.app.task_manager.add_task(self.app.current_user.id, title, description, deadline)
             self._reset_form()
-            self.refresh()
+            self.app.refresh_tasks()
         except Exception as e:
             messagebox.showerror("Ошибка", f"Не удалось добавить задачу: {e}")
 

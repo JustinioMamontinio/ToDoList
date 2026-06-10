@@ -19,10 +19,10 @@ class TaskManager:
     ) -> None:
         """Создает новую задачу для пользователя."""
         new_task = Task(
-            user_id=user_id,
-            title=title,
-            description=description,
-            deadline=deadline
+            user_id = user_id,
+            title = title,
+            description  =description,
+            deadline = deadline
         )
         self.session.add(new_task)
         self.session.commit()
@@ -42,9 +42,9 @@ class TaskManager:
         done = [t for t in tasks if t.is_done]
 
         # Сортировка внутри групп
-        not_done_with_deadline.sort(key=lambda t: (t.deadline, t.title.lower()))
-        not_done_no_deadline.sort(key=lambda t: t.title.lower())
-        done.sort(key=lambda t: t.title.lower())
+        not_done_with_deadline.sort(key = lambda t: (t.deadline, t.title.lower()))
+        not_done_no_deadline.sort(key = lambda t: t.title.lower())
+        done.sort(key = lambda t: t.title.lower())
 
         return not_done_with_deadline + not_done_no_deadline + done
 

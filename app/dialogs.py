@@ -60,34 +60,33 @@ class DeadlineEditDialog(ctk.CTkToplevel):
         # Инициализация видимости
         self._toggle_widgets()
 
-    def _build_datetime_widgets(self) -> None:
-        """Создает виджеты выбора даты и времени."""
-        # Календарь
-        self.calendar = DateEntry(
-            self.deadline_frame, width=12, date_pattern='yyyy-mm-dd'
-        )
-        self.calendar.pack(side="left", padx=(0, 10))
+        def build_datetime_widgets(self) -> None:
+            """Простое создание виджетов для диалога."""
+            self.calendar = DateEntry(
+                self.deadline_frame, width=12, date_pattern='yyyy-mm-dd',
+                borderwidth=2
+            )
+            self.calendar.pack(side="left", padx=(0, 10))
+            
+            time_frame = ctk.CTkFrame(self.deadline_frame, fg_color="transparent")
+            time_frame.pack(side="left")
+            
+            self.hour_entry = ctk.CTkEntry(time_frame, width=40)
+            self.hour_entry.pack(side="left")
+            ctk.CTkLabel(time_frame, text=" : ").pack(side="left")
+            self.minute_entry = ctk.CTkEntry(time_frame, width=40)
+            self.minute_entry.pack(side="left")
+            
+            if self.task.deadline:
+                self.calendar.set_date(self.task.deadline.date())
+                self.hour_entry.insert(0, f"{self.task.deadline.hour:02d}")
+                self.minute_entry.insert(0, f"{self.task.deadline.minute:02d}")
+            else:
+                tomorrow = date.today() + timedelta(days=1)
+                self.calendar.set_date(tomorrow)
+                self.hour_entry.insert(0, "09")
+                self.minute_entry.insert(0, "00")
 
-        # Время
-        time_frame = ctk.CTkFrame(self.deadline_frame, fg_color="transparent")
-        time_frame.pack(side="left")
-        
-        self.hour_entry = ctk.CTkEntry(time_frame, width=40)
-        self.hour_entry.pack(side="left")
-        ctk.CTkLabel(time_frame, text=" : ").pack(side="left")
-        self.minute_entry = ctk.CTkEntry(time_frame, width=40)
-        self.minute_entry.pack(side="left")
-
-        # Заполнение значениями
-        if self.task.deadline:
-            self.calendar.set_date(self.task.deadline.date())
-            self.hour_entry.insert(0, f"{self.task.deadline.hour:02d}")
-            self.minute_entry.insert(0, f"{self.task.deadline.minute:02d}")
-        else:
-            tomorrow = date.today() + timedelta(days=1)
-            self.calendar.set_date(tomorrow)
-            self.hour_entry.insert(0, "00")
-            self.minute_entry.insert(0, "00")
 
     def _toggle_widgets(self) -> None:
         """Показывает/скрывает виджеты выбора даты."""
@@ -118,12 +117,22 @@ class DeadlineEditDialog(ctk.CTkToplevel):
             return None
 
     def _save(self) -> None:
-        """Обработчик кнопки сохранения."""
-        new_deadline = self._parse_datetime()
-        if new_deadline is None and self.deadline_enabled.get():
-            return  # Ошибка валидации уже показана
-        if self.deadline_enabled.get() and new_deadline is None:
-            return
-            
+        """Сохранение с простой проверкой введённых данных."""
+        new_deadline = None
+        
+        if self.deadline_enabled.get():
+            try:
+                date_str = str(self.calendar.get())
+                h = int(self.hour_entry.get().strip() or 0)
+                m = int(self.minute_entry.get().strip() or 0)
+                
+                if not (0 <= h <= 23 and 0 <= m <= 59):
+                    raise ValueError("Время должно быть от 00:00 до 23:59")
+                    
+                new_deadline = datetime.strptime(f"{date_str} {h:02d}:{m:02d}", "%Y-%m-%d %H:%M")
+            except Exception as e:
+                messagebox.showerror("Ошибка", f"Неверный формат даты или времени: {e}")
+                return
+                
         self._on_save(self.task.id, new_deadline)
         self.destroy()

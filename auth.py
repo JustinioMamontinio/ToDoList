@@ -25,7 +25,7 @@ class AuthService:
             Экземпляр созданного пользователя.
         """
         hashed_pw = self._hash_password(password)
-        new_user = User(nickname = nickname, email=email, password_hash=hashed_pw)
+        new_user = User(nickname = nickname, email = email, password_hash = hashed_pw)
         self.session.add(new_user)
         self.session.commit()
         return new_user
