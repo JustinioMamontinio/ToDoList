@@ -7,7 +7,7 @@ from sqlalchemy.exc import IntegrityError
 
 from database import Session, init_db
 from auth import AuthService
-from tasks import TaskManager
+from tasks import TaskManager, GroupManager
 from models import User
 from utils import user_data_path
 from .helpers import center_window, bring_to_front
@@ -29,6 +29,7 @@ class TodoApp:
         self.session = Session()
         self.auth_service = AuthService(self.session)
         self.task_manager = TaskManager(self.session)
+        self.group_manager = GroupManager(self.session)
         self.current_user: User | None = None
 
         # Настройка главного окна
@@ -50,6 +51,7 @@ class TodoApp:
             on_show_tasks=self.show_tasks
         )
         self.task_view: TaskView | None = None
+    
 
         # Авто-вход или показ экрана входа
         if not self._try_auto_login():
@@ -107,7 +109,8 @@ class TodoApp:
             main_frame=self.main_frame,
             root=self.root,
             task_manager=self.task_manager,
-            user_id=self.current_user.nickname,
+            group_manager=self.group_manager,
+            user_id=self.current_user.id,
             on_logout=self.logout,
             on_refresh=lambda: None  # refresh вызывается внутри TaskView
         )

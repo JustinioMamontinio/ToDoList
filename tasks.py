@@ -1,8 +1,64 @@
 """Менеджер задач: добавление, получение, обновление, удаление."""
-from models import Task
-from sqlalchemy.orm import Session
+from models import Task, GroupTask
+from sqlalchemy.orm import Session, joinedload
 from datetime import datetime
 
+class GroupManager:
+    def __init__(self, session: Session):
+        self.session = session
+
+    def create_group(self, user_id, title, description, parent_id = None):
+        if parent_id:
+            parent = self.session.query(GroupTask).filter_by(id = parent_id, user_id = user_id).first()
+            if not parent:
+                raise ValueError("Родительская группа не найдена или недоступна")
+        new_group = GroupTask(user_id = user_id, title = title, description = description, parent_id = parent_id)
+        self.session.add(new_group)
+        self.session.commit()
+        return new_group
+
+    def get_root_groups(self, user_id):
+        return self.session.query(GroupTask).options(joinedload(GroupTask.children).joinedload(GroupTask.tasks), joinedload(GroupTask.tasks)).filter_by(user_id = user_id, parent_id = None).all()
+    
+    def delete_group(self, user_id, group_id):
+        group = self.session.query(GroupTask).filter_by(id = group_id, user_id = user_id).first()
+        if group:
+            self.session.delete(group)
+            self.session.commit()
+            return True
+        return False
+    
+    def move_task_to_group(self, user_id, group_id, task_id):
+        task = self.session.query(Task).filter_by(id = task_id, user_id = user_id).first()
+        if task:
+            if group_id:
+                group = self.session.query(GroupTask).filter_by(id = group_id, user_id = user_id).first()
+                if not group:
+                    return False
+            task.group_id = group_id
+            self.session.commit()
+            return True
+        return False
+    
+    def add_subtask(self, user_id: int, group_id: int, title: str, description: str = "", deadline = None):
+        group = self.session.query(GroupTask).filter_by(id=group_id, user_id=user_id).first()
+        if not group:
+            raise ValueError("Группа не найдена")
+        
+        new_task = Task(
+            user_id=user_id,
+            group_id=group_id,
+            title=title,
+            description=description,
+            deadline=deadline
+        )
+        self.session.add(new_task)
+        self.session.commit()
+        return new_task
+
+    def get_group(self, user_id, group_id):
+        return self.session.query(GroupTask).filter_by(id=group_id, user_id=user_id).first()
+        
 
 class TaskManager:
     """Управление задачами пользователя."""
@@ -16,7 +72,7 @@ class TaskManager:
         title: str, 
         description: str, 
         deadline: datetime | None = None
-    ) -> None:
+    ) -> Task:
         """Создает новую задачу для пользователя."""
         new_task = Task(
             user_id = user_id,
@@ -26,15 +82,16 @@ class TaskManager:
         )
         self.session.add(new_task)
         self.session.commit()
+        return new_task
 
-    def get_all_tasks(self, user_id: int) -> list[Task]:
+    def get_ungrouped_tasks(self, user_id: int) -> list[Task]:
         """
         Возвращает задачи пользователя в порядке приоритета:
         1. Невыполненные с дедлайном (сортировка: ближайший → дальний, затем по названию)
         2. Невыполненные без дедлайна (по названию)
         3. Выполненные (по названию)
         """
-        tasks = self.session.query(Task).filter_by(user_id=user_id).all()
+        tasks = self.session.query(Task).filter_by(user_id=user_id, group_id = None).all()
 
         # Группировка задач по статусу
         not_done_with_deadline = [t for t in tasks if not t.is_done and t.deadline]

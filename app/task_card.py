@@ -16,12 +16,14 @@ class TaskCard(tk.Frame):
         self,
         parent: tk.Widget,
         task: Task,
+        level: int,
         on_toggle: callable,
         on_edit: callable,
         on_delete: callable
     ):
         super().__init__(parent, bg="#2b2b2b", relief="solid", borderwidth=1)
         self.task = task
+        self.level = level
         self._on_toggle = on_toggle
         self._on_edit = on_edit
         self._on_delete = on_delete

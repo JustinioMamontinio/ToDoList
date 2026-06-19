@@ -1,3 +1,7 @@
 *.db
 __pycache__/
 *.json
+*.pyc
+*.pyo
+*.pyd
+.Python
