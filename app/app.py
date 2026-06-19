@@ -111,6 +111,7 @@ class TodoApp:
             task_manager=self.task_manager,
             group_manager=self.group_manager,
             user_id=self.current_user.id,
+            nickname=self.current_user.nickname,
             on_logout=self.logout,
             on_refresh=lambda: None  # refresh вызывается внутри TaskView
         )

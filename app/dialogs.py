@@ -60,32 +60,32 @@ class DeadlineEditDialog(ctk.CTkToplevel):
         # Инициализация видимости
         self._toggle_widgets()
 
-        def build_datetime_widgets(self) -> None:
-            """Простое создание виджетов для диалога."""
-            self.calendar = DateEntry(
-                self.deadline_frame, width=12, date_pattern='yyyy-mm-dd',
-                borderwidth=2
-            )
-            self.calendar.pack(side="left", padx=(0, 10))
-            
-            time_frame = ctk.CTkFrame(self.deadline_frame, fg_color="transparent")
-            time_frame.pack(side="left")
-            
-            self.hour_entry = ctk.CTkEntry(time_frame, width=40)
-            self.hour_entry.pack(side="left")
-            ctk.CTkLabel(time_frame, text=" : ").pack(side="left")
-            self.minute_entry = ctk.CTkEntry(time_frame, width=40)
-            self.minute_entry.pack(side="left")
-            
-            if self.task.deadline:
-                self.calendar.set_date(self.task.deadline.date())
-                self.hour_entry.insert(0, f"{self.task.deadline.hour:02d}")
-                self.minute_entry.insert(0, f"{self.task.deadline.minute:02d}")
-            else:
-                tomorrow = date.today() + timedelta(days=1)
-                self.calendar.set_date(tomorrow)
-                self.hour_entry.insert(0, "09")
-                self.minute_entry.insert(0, "00")
+    def _build_datetime_widgets(self) -> None:
+        """Простое создание виджетов для диалога."""
+        self.calendar = DateEntry(
+            self.deadline_frame, width=12, date_pattern='yyyy-mm-dd',
+            borderwidth=2
+        )
+        self.calendar.pack(side="left", padx=(0, 10))
+        
+        time_frame = ctk.CTkFrame(self.deadline_frame, fg_color="transparent")
+        time_frame.pack(side="left")
+        
+        self.hour_entry = ctk.CTkEntry(time_frame, width=40)
+        self.hour_entry.pack(side="left")
+        ctk.CTkLabel(time_frame, text=" : ").pack(side="left")
+        self.minute_entry = ctk.CTkEntry(time_frame, width=40)
+        self.minute_entry.pack(side="left")
+        
+        if self.task.deadline:
+            self.calendar.set_date(self.task.deadline.date())
+            self.hour_entry.insert(0, f"{self.task.deadline.hour:02d}")
+            self.minute_entry.insert(0, f"{self.task.deadline.minute:02d}")
+        else:
+            tomorrow = date.today() + timedelta(days=1)
+            self.calendar.set_date(tomorrow)
+            self.hour_entry.insert(0, "09")
+            self.minute_entry.insert(0, "00")
 
 
     def _toggle_widgets(self) -> None:

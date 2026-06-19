@@ -16,6 +16,8 @@ from .dialogs import DeadlineEditDialog
 from .group_card import GroupCard
 from .task_card import TaskCard
 
+from sqlalchemy.orm import Session
+
 
 class TaskView:
     """
@@ -38,6 +40,7 @@ class TaskView:
         task_manager: TaskManager,
         group_manager: GroupManager,
         user_id: int,
+        nickname: str,
         on_logout: callable,
         on_refresh: callable,
     ) -> None:
@@ -58,8 +61,10 @@ class TaskView:
         self.task_manager = task_manager
         self.group_manager = group_manager
         self.user_id = user_id
+        self.nickname = nickname
         self._on_logout = on_logout
         self._on_refresh = on_refresh
+        self.session = Session
 
         # Состояние сворачивания групп (ID развернутых групп)
         self.expanded_groups: set[int] = set()
@@ -153,6 +158,7 @@ class TaskView:
             self.refresh()
         except Exception as e:
             messagebox.showerror("Ошибка", f"Не удалось добавить задачу: {e}")
+        self._active_group_id = None
 
     def toggle_task(self, task: Task) -> None:
         """Переключает статус выполнения задачи."""
@@ -165,6 +171,9 @@ class TaskView:
                 )
         except Exception as e:
             messagebox.showerror("Ошибка", f"Не удалось изменить статус: {e}")
+
+    def delete_group_before_add(self):
+        self._active_group_id = None
 
     def delete_task(self, task: Task) -> None:
         """Удаляет задачу."""
@@ -195,16 +204,11 @@ class TaskView:
 
         ctk.CTkLabel(
             header,
-            text=f"Привет, {self.user_id}!",
+            text=f"Привет, {self.nickname}!",
             font=ctk.CTkFont(size=16, weight="bold"),
         ).pack(side="left", padx=10)
 
-        ctk.CTkButton(
-            header,
-            text="📁 Новая группа",
-            command=self._prompt_add_root_group,
-            width=120,
-        ).pack(side="right", padx=10)
+        
 
         ctk.CTkButton(
             header, text="Выйти", command=self._on_logout, width=80
@@ -268,6 +272,23 @@ class TaskView:
             command=self.add_task,
             height=35,
         ).grid(row=5, column=0, columnspan=2, pady=15)
+
+        ctk.CTkButton(
+            form,
+            text="📁 Новая группа",
+            command=self._prompt_add_root_group,
+            width=120,
+            height=35,
+        ).grid(row=5, column=1, columnspan=2, pady=15)
+
+        ctk.CTkButton(
+            form, 
+            text="Отменить выбор группы",
+            command = self.delete_group_before_add,
+            height = 35,
+            fg_color="#FF0000",
+            hover_color="#CC0000"
+        ).grid(row = 0, column =2, columnspan=2, padx=10, pady=(10, 0), sticky="w")
 
         form.columnconfigure(1, weight=1)
 
@@ -436,6 +457,7 @@ class TaskView:
                     raise ValueError("Время должно быть от 00:00 до 23:59")
                     
                 deadline = datetime.strptime(f"{date_str} {h:02d}:{m:02d}", "%Y-%m-%d %H:%M")
+                return deadline
             except Exception as e:
                 messagebox.showerror("Ошибка", f"Неверный формат даты или времени: {e}")
                 return
