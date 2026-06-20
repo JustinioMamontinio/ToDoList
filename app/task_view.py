@@ -64,7 +64,6 @@ class TaskView:
         self.nickname = nickname
         self._on_logout = on_logout
         self._on_refresh = on_refresh
-        self.session = Session
 
         # Состояние сворачивания групп (ID развернутых групп)
         self.expanded_groups: set[int] = set()
@@ -284,7 +283,7 @@ class TaskView:
         ctk.CTkButton(
             form, 
             text="Отменить выбор группы",
-            command = self.delete_group_before_add,
+            command = self._clear_active_group,
             height = 35,
             fg_color="#FF0000",
             hover_color="#CC0000"

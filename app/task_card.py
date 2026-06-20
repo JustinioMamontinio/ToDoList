@@ -45,15 +45,15 @@ class TaskCard(tk.Frame):
 
     def _build(self) -> None:
         """Создает элементы интерфейса карточки."""
-        self.pack(fill="x", padx=5, pady=2)
+        self.pack(fill="x", padx=(5 + self.level * 20), pady=2)
         
         # Цветная полоска-индикатор
         color_bar = tk.Frame(self, bg=self._get_status_color(), width=5)
-        color_bar.pack(side="left", fill="y", padx=(4, 8), pady=4)
+        color_bar.pack(side="left", fill="y", padx=((4 + self.level * 20), 8), pady=4)
 
         # Основной контент
         content = tk.Frame(self, bg="#2b2b2b")
-        content.pack(side="left", fill="both", expand=True)
+        content.pack(side="left", padx = 5, fill="both", expand=True)
 
         self._build_header(content)
         self._build_description(content)
@@ -63,7 +63,7 @@ class TaskCard(tk.Frame):
     def _build_header(self, parent: tk.Widget) -> None:
         """Строка с названием и статусом."""
         top = tk.Frame(parent, bg="#2b2b2b")
-        top.pack(fill="x")
+        top.pack(fill="x", padx = (5))
         
         # Название задачи
         title_color = "#888888" if self.task.is_done else "white"
