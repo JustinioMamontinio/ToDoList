@@ -16,8 +16,6 @@ from .dialogs import DeadlineEditDialog
 from .group_card import GroupCard
 from .task_card import TaskCard
 
-from sqlalchemy.orm import Session
-
 
 class TaskView:
     """
@@ -157,7 +155,6 @@ class TaskView:
             self.refresh()
         except Exception as e:
             messagebox.showerror("Ошибка", f"Не удалось добавить задачу: {e}")
-        self._active_group_id = None
 
     def toggle_task(self, task: Task) -> None:
         """Переключает статус выполнения задачи."""
@@ -171,8 +168,6 @@ class TaskView:
         except Exception as e:
             messagebox.showerror("Ошибка", f"Не удалось изменить статус: {e}")
 
-    def delete_group_before_add(self):
-        self._active_group_id = None
 
     def delete_task(self, task: Task) -> None:
         """Удаляет задачу."""

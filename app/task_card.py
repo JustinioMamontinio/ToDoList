@@ -63,7 +63,7 @@ class TaskCard(tk.Frame):
     def _build_header(self, parent: tk.Widget) -> None:
         """Строка с названием и статусом."""
         top = tk.Frame(parent, bg="#2b2b2b")
-        top.pack(fill="x", padx = (5))
+        top.pack(fill="x", padx = 5)
         
         # Название задачи
         title_color = "#888888" if self.task.is_done else "white"
