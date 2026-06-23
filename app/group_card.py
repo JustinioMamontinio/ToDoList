@@ -9,6 +9,7 @@ class GroupCard(tk.Frame):
         parent,
         group: GroupTask,
         level: int,
+        is_expanded: bool,
         on_toggle: callable,
         on_add_task: callable,
         on_add_group: callable,
@@ -18,6 +19,7 @@ class GroupCard(tk.Frame):
         super().__init__(parent, bg="#2b2b2b", relief="solid", borderwidth=1, **kwargs)
         self.group = group
         self.level = level
+        self.is_expanded = is_expanded
         self._on_toggle = on_toggle
         self._on_add_task = on_add_task
         self._on_add_group = on_add_group
@@ -39,7 +41,7 @@ class GroupCard(tk.Frame):
         
         # Кнопка развернуть/свернуть (треугольник)
         toggle_btn = tk.Label(
-            top_frame, text="▼" if self.group.id in getattr(self.master, 'expanded_groups', set()) else "▶",
+            top_frame, text="▼" if self.is_expanded else "▶",
             font=("Segoe UI", 10), fg="white", bg="#2b2b2b", cursor="hand2"
         )
         toggle_btn.pack(side="left")

@@ -2,6 +2,7 @@
 from models import Task, GroupTask
 from sqlalchemy.orm import Session, joinedload
 from datetime import datetime
+from helpers import sort_tasks, sort_groups
 
 class GroupManager:
     def __init__(self, session: Session):
@@ -92,18 +93,8 @@ class TaskManager:
         3. Выполненные (по названию)
         """
         tasks = self.session.query(Task).filter_by(user_id=user_id, group_id = None).all()
-
-        # Группировка задач по статусу
-        not_done_with_deadline = [t for t in tasks if not t.is_done and t.deadline]
-        not_done_no_deadline = [t for t in tasks if not t.is_done and not t.deadline]
-        done = [t for t in tasks if t.is_done]
-
-        # Сортировка внутри групп
-        not_done_with_deadline.sort(key = lambda t: (t.deadline, t.title.lower()))
-        not_done_no_deadline.sort(key = lambda t: t.title.lower())
-        done.sort(key = lambda t: t.title.lower())
-
-        return not_done_with_deadline + not_done_no_deadline + done
+        sorted_tasks = sort_tasks(tasks)
+        return sorted_tasks
 
     def toggle_completed(self, user_id: int, task_id: int) -> bool:
         """

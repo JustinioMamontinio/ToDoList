@@ -11,6 +11,7 @@ from tkinter import messagebox
 # Локальные модули
 from models import GroupTask, Task
 from tasks import TaskManager, GroupManager
+from helpers import sort_tasks, sort_groups
 
 from .dialogs import DeadlineEditDialog
 from .group_card import GroupCard
@@ -102,13 +103,16 @@ class TaskView:
         self._clear_tasks_container()
 
         root_groups = self.group_manager.get_root_groups(self.user_id)
+        sorted_groups = sort_groups(root_groups)
+        incomplete_groups = sorted_groups[1]
+        completed_groups = sorted_groups[0]
         ungrouped_tasks = self.task_manager.get_ungrouped_tasks(self.user_id)
 
         if not root_groups and not ungrouped_tasks:
             self._show_empty_state()
             return
 
-        for group in root_groups:
+        for group in incomplete_groups:
             self._render_group_recursive(group, level=0)
 
         for task in ungrouped_tasks:
@@ -120,6 +124,10 @@ class TaskView:
                 on_edit=self.edit_deadline,
                 on_delete=self.delete_task,
             ).pack(fill="x", padx=5, pady=2)
+
+        for group in completed_groups:
+            self._render_group_recursive(group, level=0)
+
 
     def add_task(self) -> None:
         """Добавление задачи (в активную группу или в общий список)."""
@@ -337,6 +345,7 @@ class TaskView:
             parent=self.tasks_container,
             group=group,
             level=level,
+            is_expanded=(group.id in self.expanded_groups),
             on_toggle=self._toggle_group,
             on_add_task=self._set_active_group,
             on_add_group=self._prompt_add_subgroup,
@@ -349,7 +358,7 @@ class TaskView:
         for child in group.children:
             self._render_group_recursive(child, level + 1)
 
-        for task in group.tasks:
+        for task in sort_tasks(group.tasks):
             TaskCard(
                 parent=self.tasks_container,
                 task=task,
@@ -375,8 +384,21 @@ class TaskView:
         """Запрашивает название и создаёт подгруппу."""
         title = "Новая группа" if parent_id is None else "Новая подгруппа"
         dialog = ctk.CTkInputDialog(
-            text="Введите название группы:", title=title
+            text="Введите название группы:", title=title,
         )
+        dialog.update()  # Обновляем размеры
+        dialog_width = dialog.winfo_width()
+        dialog_height = dialog.winfo_height()
+        
+        main_x = self.root.winfo_x()
+        main_y = self.root.winfo_y()
+        main_width = self.root.winfo_width()
+        main_height = self.root.winfo_height()
+        
+        x = main_x + (main_width - dialog_width) // 2
+        y = main_y + (main_height - dialog_height) // 2
+        
+        dialog.geometry(f"+{x}+{y}")
         name = dialog.get_input()
 
         if not name or not name.strip():
