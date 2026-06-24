@@ -63,6 +63,7 @@ class Task(Base):
     is_done: Mapped[bool] = mapped_column(default=False)
     deadline: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     saved_deadline: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    last_notifier: Mapped[int | None] = mapped_column(default = None)
 
     def __str__(self) -> str:
         return f'[{"V" if self.is_done else "X"}]   {self.title}'

@@ -32,10 +32,12 @@ def init_db() -> None:
     # Миграции для таблицы tasks
     task_columns = [col["name"] for col in inspector.get_columns("tasks")]
     with engine.connect() as conn:
-        if "group_id" not in task_columns:  # ← НОВОЕ
+        if "group_id" not in task_columns:
             conn.execute(text("ALTER TABLE tasks ADD COLUMN group_id INTEGER"))
         if "deadline" not in task_columns:
             conn.execute(text("ALTER TABLE tasks ADD COLUMN deadline TIMESTAMP"))
         if "saved_deadline" not in task_columns:
             conn.execute(text("ALTER TABLE tasks ADD COLUMN saved_deadline TIMESTAMP"))
+        if "last_notifier" not in task_columns:
+            conn.execute(text("ALTER TABLE tasks ADD COLUMN last_notifier INTEGER"))
         conn.commit()

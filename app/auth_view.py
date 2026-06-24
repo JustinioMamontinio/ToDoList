@@ -5,6 +5,8 @@ from sqlalchemy.exc import IntegrityError
 from auth import AuthService
 from models import User
 
+from email_validator import validate_email, EmailNotValidError
+
 
 class AuthView:
     """Управление экранами входа и регистрации."""
@@ -140,7 +142,9 @@ class AuthView:
         if password != confirm:
             messagebox.showerror("Ошибка", "Пароли не совпадают.")
             return
-            
+        if not self.check_email(email):
+            return
+        
         try:
             user = self.auth_service.register(email, nickname, password)
             if user:
@@ -151,3 +155,13 @@ class AuthView:
             messagebox.showerror("Ошибка", "Пользователь с таким email уже существует.")
         except Exception as e:
             messagebox.showerror("Ошибка", f"Произошла ошибка: {e}")
+
+    def check_email(self, email):
+        try:
+            v = validate_email(email)
+            res_email = v['email']
+            return res_email
+        except EmailNotValidError as e:
+            print(str(e))
+            messagebox.showerror("Ошибка", "Введен некорректный email.")
+            return None
